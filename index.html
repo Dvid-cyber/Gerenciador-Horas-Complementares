@@ -121,8 +121,10 @@
         // Variáveis globais do Canvas/Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         // Garante que o firebaseConfig seja nulo se a variável de ambiente não for encontrada ou for inválida
-       import { initializeApp } from "firebase/app";
+      // firebase.js
+import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -133,6 +135,13 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_APP_ID,
   measurementId: import.meta.env.VITE_MEASUREMENT_ID
 };
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
+
+export { app, analytics, db };
+
 
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
