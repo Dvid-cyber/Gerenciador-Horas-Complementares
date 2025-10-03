@@ -120,9 +120,17 @@
     <script type="module">
         // Variáveis globais do Canvas/Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
+        // Garante que o firebaseConfig seja nulo se a variável de ambiente não for encontrada ou for inválida
+        let firebaseConfig = null;
+        try {
+             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = JSON.parse(__firebase_config);
+            }
+        } catch (e) {
+            console.error("Erro ao fazer parse de __firebase_config:", e);
+            // firebaseConfig permanece null, será tratado como erro de configuração
+        }
+        
         // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
@@ -193,8 +201,12 @@
          */
         function handleError(message, error) {
             console.error(message, error);
+            
+            // Corrige a mensagem para ser mais descritiva, especialmente se 'error' for nulo
+            const detailMessage = error ? error.message : 'A causa pode ser a falta da variável de configuração do Firebase (__firebase_config).';
+
             showModal("Erro Crítico", 
-                      `${message}: ${error ? error.message : 'Detalhes desconhecidos.'}`, 
+                      `${message}: ${detailMessage}`, 
                       [{ text: "Entendido", style: "bg-red-500 hover:bg-red-600 text-white" }]);
         }
 
@@ -205,8 +217,11 @@
         
         // Função de inicialização do Firebase e autenticação
         async function setupFirebase() {
+            // VERIFICAÇÃO DE CONFIGURAÇÃO MELHORADA
             if (!firebaseConfig) {
-                handleError("Configuração do Firebase não encontrada.", null);
+                handleError("Configuração do Ambiente não Encontrada", 
+                            new Error("As variáveis de configuração do Firebase (__firebase_config) são obrigatórias para a persistência de dados."),
+                            true);
                 return;
             }
 
@@ -259,7 +274,7 @@
          */
         window.signInWithGoogle = async function() {
             if (!auth) {
-                handleError("O serviço de autenticação não está pronto.", null);
+                handleError("O serviço de autenticação não está pronto. Recarregue a página.", null);
                 return;
             }
             try {
