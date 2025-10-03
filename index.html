@@ -121,15 +121,21 @@
         // Variáveis globais do Canvas/Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         // Garante que o firebaseConfig seja nulo se a variável de ambiente não for encontrada ou for inválida
-       const firebaseConfig = {
-  apiKey: "AIzaSyBAZ_MqF9r5agWsK9bZXne7zeNzGXe3kjs",
-  authDomain: "calculo-de-hc.firebaseapp.com",
-  projectId: "calculo-de-hc",
-  storageBucket: "calculo-de-hc.firebasestorage.app",
-  messagingSenderId: "160217454817",
-  appId: "1:160217454817:web:c58def4b16e7f8c1ff7fa0",
-  measurementId: "G-0YS7S2WKZN"
+       import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID,
+  measurementId: import.meta.env.VITE_MEASUREMENT_ID
 };
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
         } catch (e) {
             console.error("Erro ao fazer parse de __firebase_config:", e);
