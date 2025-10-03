@@ -201,7 +201,7 @@
         const INITIAL_SEMESTERS = ['2026/2', '2026/1', '2025/2', '2025/1', '2024/2']; 
 
         // Tenta usar as variáveis globais do ambiente (preferencial para o Canvas)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Fallback ID
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -215,36 +215,35 @@
             C: 50,
         };
 
-        // Regras de Atividades (Baseado no documento HORAS.pdf)
+        // Regras de Atividades (Ajustado para remover a numeração inicial, evitando duplicação na UI)
         const activityRules = {
             A: [
-                { id: '1A', desc: '1.A. Cursos de língua estrangeira (20h/semestre ou carga horária no certificado, se inferior a 20h/semestre)', calc: (h) => Math.min(h, 20) },
-                { id: '2A', desc: '2.A. Participação em cursos extraordinários (1h para cada 4h cursadas)', calc: (h) => Math.floor(h / 4) },
-                { id: '3A', desc: '3.A. Participação como ouvinte em palestras, congressos e seminários (1h para cada 4h de participação)', calc: (h) => Math.floor(h / 4) },
-                { id: '4A', desc: '4.A. Participação e aprovação em disciplinas/unidades de enriquecimento (20h/semestre ou carga horária no certificado, se inferior a 20h/semestre)', calc: (h) => Math.min(h, 20) },
-                { id: '5A', desc: '5.A. Monitoria (bolsista ou voluntário) (25h por semestre)', calc: (h) => Math.min(h, 25) },
-                { id: '6A', desc: '6.A. Participação em programas de intercâmbio (1h para cada 4h comprovadas)', calc: (h) => Math.floor(h / 4) },
+                { id: '1A', desc: 'Cursos de língua estrangeira (20h por semestre ou carga horária no certificado, se inferior a 20h por semestre)', calc: (h) => Math.min(h, 20) },
+                { id: '2A', desc: 'Participação em cursos extraordinários da sua área de formação, de fundamento científico ou de gestão (1h para cada 4h cursadas)', calc: (h) => Math.floor(h / 4) },
+                { id: '3A', desc: 'Participação como ouvinte em palestras, congressos e seminários técnico-científicos (1h para cada 4h de participação)', calc: (h) => Math.floor(h / 4) },
+                { id: '4A', desc: 'Participação e aprovação em disciplinas/unidades de enriquecimento curricular (20h por semestre ou carga horária no certificado, se inferior a 20h por semestre)', calc: (h) => Math.min(h, 20) },
+                { id: '5A', desc: 'Monitoria (bolsista ou voluntário) (25 horas por semestre)', calc: (h) => Math.min(h, 25) },
+                { id: '6A', desc: 'Participação em programas de intercâmbio (1h para cada 4h comprovadas)', calc: (h) => Math.floor(h / 4) },
             ],
             B: [
-                { id: '1B', desc: '1.B. Participação efetiva em trabalhos voluntários, atividades comunitárias, etc. (5h por semestre)', calc: (h) => Math.min(h, 5) },
-                { id: '2B', desc: '2.B. Atuação como Instrutor em palestras, seminários, cursos (2 horas por palestra)', calc: (h) => h * 2 },
-                // Para 3B, o campo de horas/unidades será '1' para semestral, '2' para anual.
-                { id: '3B', desc: '3.B. Atuação como Instrutor em projetos semestrais/anuais (25h por projeto semestral ou 50h por projeto anual)', calc: (h) => h === 1 ? 25 : h === 2 ? 50 : 0 }, 
-                { id: '4B', desc: '4.B. Participação como apresentador de trabalhos em palestras, congressos e seminários (2 horas por apresentação)', calc: (h) => h * 2 },
-                { id: '5B', desc: '5.B. Participação em projetos de iniciação científica e tecnológica, extensão, grupos de pesquisa (30 horas por semestre)', calc: (h) => Math.min(h, 30) },
-                { id: '6B', desc: '6.B. Participação como expositor em exposições técnico-científicas (1 hora por exposição)', calc: (h) => h * 1 },
-                { id: '7B', desc: '7.B. Participação efetiva na organização de eventos (2 horas por apresentação)', calc: (h) => h * 2 },
-                { id: '8B', desc: '8.B. Publicações em revistas técnicas (20 horas por publicação)', calc: (h) => h * 20 },
-                { id: '9B', desc: '9.B. Publicações em anais de eventos ou periódicos (10 horas por publicação)', calc: (h) => h * 10 },
-                { id: '10B', desc: '10.B. Premiação de trabalho acadêmico (10 horas por trabalho premiado)', calc: (h) => h * 10 },
-                { id: '11B', desc: '11.B. Estágio não obrigatório na área do curso (1h para cada 10h estagiadas)', calc: (h) => Math.floor(h / 10) },
-                { id: '12B', desc: '12.B. Trabalho com vínculo empregatício na área do curso (1h para cada 10h trabalhadas)', calc: (h) => Math.floor(h / 10) },
-                { id: '13B', desc: '13.B. Participação em Empresa/Consultoria Júnior e Incubadora Tecnológica (25h por semestre)', calc: (h) => Math.min(h, 25) },
+                { id: '1B', desc: 'Participação efetiva em trabalhos voluntários, atividades comunitárias, CIPAS, associações de bairros, audiências públicas, brigadas de incêndio e associações escolares (5h por semestre)', calc: (h) => Math.min(h, 5) },
+                { id: '2B', desc: 'Atuação como Instrutor em palestras, seminários, cursos da área específica (2 horas por palestra)', calc: (h) => h * 2 },
+                { id: '3B', desc: 'Atuação como Instrutor em projetos semestrais/anuais (25h por projeto semestral ou 50h por projeto anual)', calc: (h) => h === 1 ? 25 : h === 2 ? 50 : 0 }, 
+                { id: '4B', desc: 'Participação como apresentador de trabalhos em palestras, congressos e seminários técnico-científicos (2 horas por apresentação)', calc: (h) => h * 2 },
+                { id: '5B', desc: 'Participação em projetos de iniciação científica e tecnológica, extensão, grupos de pesquisa (30 horas por semestre)', calc: (h) => Math.min(h, 30) },
+                { id: '6B', desc: 'Participação como expositor em exposições técnico-científicas (1 hora por exposição)', calc: (h) => h * 1 },
+                { id: '7B', desc: 'Participação efetiva na organização de exposições, congressos, jornadas e seminários na área do curso (2 horas por apresentação)', calc: (h) => h * 2 },
+                { id: '8B', desc: 'Publicações em revistas técnicas (20 horas por publicação)', calc: (h) => h * 20 },
+                { id: '9B', desc: 'Publicações em anais de eventos técnico-científicos ou em periódicos científicos (10 horas por publicação)', calc: (h) => h * 10 },
+                { id: '10B', desc: 'Premiação de trabalho acadêmico (10 horas por trabalho premiado)', calc: (h) => h * 10 },
+                { id: '11B', desc: 'Estágio não obrigatório na área do curso (1h para cada 10h estagiadas)', calc: (h) => Math.floor(h / 10) },
+                { id: '12B', desc: 'Trabalho com vínculo empregatício na área do curso (1h para cada 10h trabalhadas)', calc: (h) => Math.floor(h / 10) },
+                { id: '13B', desc: 'Participação em Empresa/Consultoria Júnior e Incubadora Tecnológica (25h por semestre)', calc: (h) => Math.min(h, 25) },
             ],
             C: [
-                { id: '1C', desc: '1.C. Representante de turma (1h para cada 4h de atuação)', calc: (h) => Math.floor(h / 4) },
-                { id: '2C', desc: '2.C. Representação discente no Colegiado/Conselho Superior (1h para cada 4h de atuação)', calc: (h) => Math.floor(h / 4) },
-                { id: '3C', desc: '3.C. Integrante de Diretório ou Centro Acadêmico no IFB (1h para cada 4h de atuação)', calc: (h) => Math.floor(h / 4) },
+                { id: '1C', desc: 'Representante de turma (1h para cada 4h de atuação)', calc: (h) => Math.floor(h / 4) },
+                { id: '2C', desc: 'Representação discente no Colegiado de TGP ou Conselho Superior (1h para cada 4h de atuação)', calc: (h) => Math.floor(h / 4) },
+                { id: '3C', desc: 'Integrante de Diretório ou Centro Acadêmico no IFB (1h para cada 4h de atuação)', calc: (h) => Math.floor(h / 4) },
             ],
         };
 
@@ -334,7 +333,7 @@
                     <p class="font-bold mb-1">Erro de Configuração do Ambiente</p>
                     <p class="text-sm">As variáveis de ambiente do Firebase (como a API Key) não foram carregadas corretamente. Isso impede o salvamento das suas horas no banco de dados.</p>
                     <p class="mt-2 text-xs font-mono break-all">
-                        Detalhes: ${error.message}
+                        Detalhes: As variáveis <code>__app_id</code> e <code>__firebase_config</code> são obrigatórias para a persistência de dados.
                     </p>
                 `;
             } else {
@@ -375,6 +374,7 @@
 
         /**
          * Popula o dropdown de regras com base no grupo selecionado.
+         * Corrigido para evitar duplicação do ID da regra no texto.
          */
         function populateRules(groupKey) {
             const ruleSelect = document.getElementById('rule-select');
@@ -386,7 +386,12 @@
                 activityRules[groupKey].forEach(rule => {
                     const option = document.createElement('option');
                     option.value = rule.id;
-                    option.textContent = rule.desc.split('(')[0].trim();
+                    
+                    // Pega o texto limpo da descrição (sem o cálculo entre parênteses)
+                    let cleanText = rule.desc.split('(')[0].trim();
+                    
+                    // O texto da opção agora é [ID da Regra]. [Descrição Limpa]
+                    option.textContent = `${rule.id}. ${cleanText}`;
                     ruleSelect.appendChild(option);
                 });
                 ruleSelect.disabled = false;
@@ -448,6 +453,7 @@
             }
 
             let totalGlobalHours = 0;
+            // Pega o semestre que está sendo usado para o resumo, que deve ser o mais recente.
             const currentSemester = document.getElementById('current-semester-label').textContent;
             const currentSemesterSummary = { A: 0, B: 0, C: 0 };
 
@@ -507,7 +513,7 @@
          */
         async function initFirebase() {
             if (!firebaseConfig || !appId) {
-                // Este é o cenário que causa o erro de inicialização se o ambiente falhar
+                // Este erro é disparado quando as variáveis do ambiente (Canvas) não são encontradas.
                 const error = {
                     code: 'firebase-config-missing',
                     message: 'As variáveis __app_id e __firebase_config são obrigatórias para a persistência de dados.'
@@ -738,6 +744,7 @@
                 if (groupKey && activityRules[groupKey]) {
                     const rule = activityRules[groupKey].find(r => r.id === ruleId);
                     if (rule) {
+                        // Exibe a descrição completa, incluindo o cálculo entre parênteses
                         document.getElementById('rule-description').textContent = rule.desc;
                         document.getElementById('register-btn').disabled = false;
                     }
