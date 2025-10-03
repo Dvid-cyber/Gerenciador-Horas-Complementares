@@ -121,11 +121,16 @@
         // Variáveis globais do Canvas/Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         // Garante que o firebaseConfig seja nulo se a variável de ambiente não for encontrada ou for inválida
-        let firebaseConfig = null;
-        try {
-             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                firebaseConfig = JSON.parse(__firebase_config);
-            }
+       const firebaseConfig = {
+  apiKey: "AIzaSyBAZ_MqF9r5agWsK9bZXne7zeNzGXe3kjs",
+  authDomain: "calculo-de-hc.firebaseapp.com",
+  projectId: "calculo-de-hc",
+  storageBucket: "calculo-de-hc.firebasestorage.app",
+  messagingSenderId: "160217454817",
+  appId: "1:160217454817:web:c58def4b16e7f8c1ff7fa0",
+  measurementId: "G-0YS7S2WKZN"
+};
+
         } catch (e) {
             console.error("Erro ao fazer parse de __firebase_config:", e);
             // firebaseConfig permanece null, será tratado como erro de configuração
