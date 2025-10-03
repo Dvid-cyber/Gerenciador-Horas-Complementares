@@ -203,7 +203,7 @@
             console.error(message, error);
             
             // Corrige a mensagem para ser mais descritiva, especialmente se 'error' for nulo
-            const detailMessage = error ? error.message : 'A causa pode ser a falta da variável de configuração do Firebase (__firebase_config).';
+            const detailMessage = error ? error.message : 'A causa mais provável é a falta da variável de configuração do Firebase (__firebase_config).';
 
             showModal("Erro Crítico", 
                       `${message}: ${detailMessage}`, 
@@ -219,9 +219,9 @@
         async function setupFirebase() {
             // VERIFICAÇÃO DE CONFIGURAÇÃO MELHORADA
             if (!firebaseConfig) {
+                // Remove o argumento "true" que estava no código anterior para limpeza
                 handleError("Configuração do Ambiente não Encontrada", 
-                            new Error("As variáveis de configuração do Firebase (__firebase_config) são obrigatórias para a persistência de dados."),
-                            true);
+                            new Error("As variáveis de configuração do Firebase (__firebase_config) são obrigatórias para a persistência de dados."));
                 return;
             }
 
