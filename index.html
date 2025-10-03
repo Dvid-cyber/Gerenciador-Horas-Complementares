@@ -494,24 +494,27 @@
         // --- Funções de Firebase/Dados ---
 
        // Função principal para inicialização do Firebase e autenticação
-        async function initializeAppAndAuth() {
-            // Insira AQUI o seu objeto de configuração REAL do Firebase
-            const FIREBASE_CONFIG = {
-                apiKey: "AIzaSyB...SUA_CHAVE...",
-                authDomain: "seu-projeto.firebaseapp.com",
-                projectId: "seu-projeto-id",
-                storageBucket: "seu-projeto.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:987654321:web:abcdefghij"
-            };
-            
-            // Já que a config real está no código, podemos simplificar o resto da lógica de auth:
-            const appId = FIREBASE_CONFIG.projectId; // Usamos o ID do projeto como App ID
-            const firebaseConfig = FIREBASE_CONFIG;
-            
-            // O token de autenticação inicial não existirá fora deste ambiente.
-            // Para o seu caso (que usa signInAnonymously), basta não usá-lo.
-            const initialAuthToken = null; 
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBAZ_MqF9r5agWsK9bZXne7zeNzGXe3kjs",
+  authDomain: "calculo-de-hc.firebaseapp.com",
+  projectId: "calculo-de-hc",
+  storageBucket: "calculo-de-hc.firebasestorage.app",
+  messagingSenderId: "160217454817",
+  appId: "1:160217454817:web:c58def4b16e7f8c1ff7fa0",
+  measurementId: "G-0YS7S2WKZN"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
             // Checa se a configuração foi fornecida
             if (!firebaseConfig || !firebaseConfig.apiKey) {
