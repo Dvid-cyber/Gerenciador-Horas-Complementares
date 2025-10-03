@@ -3,733 +3,821 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Horas Complementares</title>
+    <title>Registro de Horas Complementares</title>
+    <!-- Carrega Tailwind CSS para estilização moderna e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7f7f7;
-            min-height: 100vh;
+            background-color: #f4f7f9;
         }
-        .shadow-custom {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
+        }
+        .main-header {
+            background-color: #5b6afc;
+        }
+        select, input[type="number"], input[type="text"], textarea {
+            border-color: #cbd5e1;
+            border-width: 1px;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            width: 100%;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        .error-box {
+            background-color: #fca5a5;
+            color: #7f1d1d;
+            border: 1px solid #dc2626;
         }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-8">
 
-    <div class="container mx-auto p-4 md:p-8">
+    <div id="app" class="max-w-6xl mx-auto">
         <!-- Cabeçalho Principal -->
-        <header class="bg-indigo-600 text-white p-6 rounded-xl shadow-lg mb-8">
+        <header class="main-header text-white p-6 rounded-t-xl mb-6">
             <h1 class="text-3xl font-bold mb-1">Registro de Horas Complementares</h1>
-            <p class="opacity-90">Anexo 1 - Atividades Complementares do Curso</p>
-            <div class="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm">
-                <p>Usuário ID: <span id="user-id-display" class="font-mono bg-indigo-700 px-2 py-1 rounded">Carregando...</span></p>
-                <p class="mt-2 sm:mt-0">Total Global de Horas: <span id="total-hours-global" class="font-bold text-xl ml-2">0h</span></p>
+            <p class="text-sm opacity-90">Anexo 1 - Atividades Complementares do Curso</p>
+            <div id="user-info" class="flex flex-col md:flex-row md:justify-between mt-4">
+                <div>
+                    <span class="font-semibold">Usuário ID:</span> 
+                    <span id="user-id" class="ml-2 font-mono text-sm bg-indigo-700 py-1 px-3 rounded">Carregando...</span>
+                </div>
+                <div class="mt-2 md:mt-0">
+                    <span class="font-semibold">Total Global de Horas:</span> 
+                    <span id="total-global-hours" class="ml-2 text-2xl font-bold">0h</span>
+                </div>
             </div>
         </header>
 
-        <!-- Seção de Seleção e Adição -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            
-            <!-- Adicionar Atividade -->
-            <div class="bg-white p-6 rounded-xl shadow-custom lg:col-span-2">
-                <h2 class="text-2xl font-semibold text-indigo-800 mb-4">Adicionar Nova Atividade</h2>
-                <form id="add-activity-form" class="space-y-4">
-                    
-                    <div>
-                        <label for="activity-group" class="block text-sm font-medium text-gray-700">Grupo de Atividade</label>
-                        <select id="activity-group" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="">Selecione um Grupo</option>
-                            <!-- Options preenchidas via JS -->
+        <!-- Mensagem de Erro de Inicialização (Visível se houver erro no Firebase) -->
+        <div id="init-error" class="hidden error-box p-4 mb-6 rounded-lg font-medium">
+            <!-- O erro será injetado aqui pelo JavaScript -->
+        </div>
+
+        <!-- Layout de Colunas -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Coluna 1: Adicionar Atividade -->
+            <div class="lg:col-span-2 card p-6">
+                <h2 class="text-xl font-semibold text-indigo-800 mb-4">Adicionar Nova Atividade</h2>
+                <form id="add-activity-form">
+
+                    <!-- Grupo de Atividade -->
+                    <div class="mb-4">
+                        <label for="group-select" class="block text-gray-700 font-medium mb-1">Grupo de Atividade</label>
+                        <select id="group-select" required class="select-field">
+                            <option value="" disabled selected>Selecione um Grupo</option>
+                            <option value="A">Grupo A (Ensino): Máx. 90h</option>
+                            <option value="B">Grupo B (Pesquisa/Extensão): Máx. 100h</option>
+                            <option value="C">Grupo C (Rep. Estudantil): Máx. 50h</option>
                         </select>
                     </div>
 
-                    <div>
-                        <label for="activity-rule" class="block text-sm font-medium text-gray-700">Regra Específica</label>
-                        <select id="activity-rule" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500" disabled>
-                            <option value="">Selecione a Regra</option>
+                    <!-- Regra Específica -->
+                    <div class="mb-4">
+                        <label for="rule-select" class="block text-gray-700 font-medium mb-1">Regra Específica</label>
+                        <select id="rule-select" required disabled class="select-field">
+                            <option value="" disabled selected>Selecione a Regra</option>
                         </select>
+                        <p id="rule-description" class="text-xs text-gray-500 mt-1 italic"></p>
                     </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Horas/Unidades e Semestre -->
+                    <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label for="hours-input" class="block text-sm font-medium text-gray-700">Horas/Unidades Comprovadas (ex: 40)</label>
-                            <input type="number" id="hours-input" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ex: 40" required>
+                            <label for="hours-input" class="block text-gray-700 font-medium mb-1">Horas/Unidades Comprovadas (ex: 40)</label>
+                            <input type="number" id="hours-input" value="40" min="1" required class="input-field">
                         </div>
                         <div>
-                            <label for="semester-input" class="block text-sm font-medium text-gray-700">Semestre de Realização</label>
-                            <!-- Seletor com opções fixas e limitadas -->
-                            <select id="semester-input" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500" required>
-                                <option value="">Selecione o Semestre</option>
-                                <!-- Semestres fixos serão preenchidos via JS -->
+                            <label for="semester-select" class="block text-gray-700 font-medium mb-1">Semestre de Realização</label>
+                            <select id="semester-select" required class="select-field">
+                                <option value="" disabled selected>Selecione o Semestre</option>
+                                <!-- Opções de semestre serão carregadas aqui -->
                             </select>
                         </div>
                     </div>
-                    
-                    <!-- NOVO CAMPO DE OBSERVAÇÃO -->
-                    <div>
-                        <label for="description-input" class="block text-sm font-medium text-gray-700">Descrição/Detalhes da Atividade (ex: Palestra sobre Cultura Indígena, Curso de Python Básico)</label>
-                        <textarea id="description-input" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ex: Nome da Palestra, Título do Curso, Período de Atuação..."></textarea>
+
+                    <!-- Descrição da Atividade -->
+                    <div class="mb-6">
+                        <label for="description-input" class="block text-gray-700 font-medium mb-1">Descrição/Detalhes da Atividade</label>
+                        <textarea id="description-input" rows="2" placeholder="Ex: Nome da Palestra, Título do Curso, Período de Atuação..." required class="input-field resize-none"></textarea>
                     </div>
 
-                    <button type="submit" id="submit-activity-btn" class="w-full py-2 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition duration-150 shadow-md" disabled>
-                        Carregando...
+                    <!-- Botão de Registro -->
+                    <button type="submit" id="register-btn" class="btn-success w-full" disabled>
+                        Aguardando Conexão...
                     </button>
-                    <p id="error-message" class="text-red-600 text-center hidden p-2 bg-red-100 rounded-lg border border-red-300"></p>
+                    <p id="form-message" class="mt-2 text-center font-medium hidden"></p>
                 </form>
             </div>
 
-            <!-- Filtro de Semestre e Regras -->
-            <div class="bg-white p-6 rounded-xl shadow-custom">
-                <h2 class="text-2xl font-semibold text-indigo-800 mb-4">Filtrar/Gerenciar</h2>
-                <div id="semester-selector-container" class="mb-6">
-                    <label for="semester-filter" class="block text-sm font-medium text-gray-700">Filtrar por Semestre</label>
-                    <select id="semester-filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500">
+            <!-- Coluna 2: Filtrar/Gerenciar & Resumo -->
+            <div class="card p-6">
+                <h2 class="text-xl font-semibold text-indigo-800 mb-4">Filtrar/Gerenciar</h2>
+
+                <!-- Filtro de Semestre -->
+                <div class="mb-6">
+                    <label for="filter-semester" class="block text-gray-700 font-medium mb-1">Filtrar por Semestre</label>
+                    <select id="filter-semester" class="select-field">
                         <option value="all">Todos os Semestres</option>
-                        <!-- Options preenchidas via JS dinamicamente -->
+                        <!-- Opções de semestre para filtro serão carregadas aqui -->
                     </select>
                 </div>
-                
-                <h3 class="text-xl font-medium text-indigo-700 mb-3">Resumo por Grupo (Semestre Atual)</h3>
-                <div id="group-summary-container" class="space-y-2 text-sm">
-                    <!-- Resumo preenchido via JS -->
-                    <p id="group-a-summary">Grupo A (Ensino): 0h / 90h</p>
-                    <p id="group-b-summary">Grupo B (Pesquisa/Extensão): 0h / 100h</p>
-                    <p id="group-c-summary">Grupo C (Rep. Estudantil): 0h / 50h</p>
+
+                <!-- Resumo por Grupo (Semestre Atual) -->
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Resumo por Grupo (<span id="current-semester-label">Carregando...</span>)</h3>
+                <div id="summary-list" class="space-y-2">
+                    <p>Grupo A (Ensino): <span id="summary-a">0h</span> / 90h</p>
+                    <p>Grupo B (Pesquisa/Extensão): <span id="summary-b">0h</span> / 100h</p>
+                    <p>Grupo C (Rep. Estudantil): <span id="summary-c">0h</span> / 50h</p>
                 </div>
+                <button id="add-semester-btn" class="btn-primary w-full mt-4 text-sm" disabled>
+                    + Novo Semestre
+                </button>
             </div>
         </div>
 
-        <!-- Lista de Atividades -->
-        <div class="bg-white p-6 rounded-xl shadow-custom">
-            <h2 class="text-2xl font-semibold text-indigo-800 mb-4">Minhas Atividades Registradas</h2>
-            <div id="activity-list" class="space-y-4">
-                <p class="text-center text-gray-500" id="loading-message">Carregando atividades...</p>
-                <!-- Atividades listadas aqui -->
+        <!-- Minhas Atividades Registradas -->
+        <div class="card p-6 mt-6">
+            <h2 class="text-xl font-semibold text-indigo-800 mb-4">Minhas Atividades Registradas</h2>
+            <div id="activities-list" class="space-y-4">
+                <p id="activities-loading" class="text-center text-gray-500 italic">Carregando atividades...</p>
+                <!-- Lista de atividades será injetada aqui -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal de Confirmação/Erro (Customizado para substituir alert/confirm) -->
+    <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="card p-6 w-11/12 md:w-1/3">
+            <h3 id="modal-title" class="text-xl font-bold mb-4 text-indigo-800"></h3>
+            <p id="modal-message" class="mb-6"></p>
+            <div class="flex justify-end space-x-2">
+                <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancelar</button>
+                <button id="modal-confirm-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modais de Confirmação e Informação (Necessário para substituir alert/confirm) -->
-    <div id="confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
-            <h3 class="text-lg font-semibold mb-4 text-gray-900" id="modal-title"></h3>
-            <p class="text-gray-700 mb-6" id="modal-message"></p>
-            <div class="flex justify-end space-x-3">
-                <button id="modal-cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
-                <button id="modal-confirm-btn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">Confirmar</button>
-            </div>
-        </div>
-    </div>
 
+    <!-- Script JavaScript com o Firebase e a Lógica do App -->
     <script type="module">
+        // Importa as funções necessárias das versões estáveis que incluem Auth e Firestore
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, query, where, addDoc, deleteDoc, orderBy, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, arrayUnion, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Variáveis globais para Firebase e estado
-        let app, db, auth;
-        let userId = null;
-        let isAuthReady = false; // Estado de prontidão da autenticação/Firebase
-        let currentSemester = null; // Semestre atualmente selecionado para filtragem
-        let activitiesSnapshot = []; // Cache do snapshot de atividades
-        setLogLevel('debug'); // Ativa logs de debug do Firestore
+        // =========================================================================
+        // CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS
+        // =========================================================================
+        
+        // Lista de semestres fornecida pelo usuário, ordenada decrescentemente
+        const INITIAL_SEMESTERS = ['2026/2', '2026/1', '2025/2', '2025/1', '2024/2']; 
 
-        // Lista fixa de semestres permitidos para registro (SINCRONIZADA)
-        const FIXED_SEMESTERS = ["2024/2", "2025/1", "2025/2", "2026/1", "2026/2"];
+        // Tenta usar as variáveis globais do ambiente (preferencial para o Canvas)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : null;
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // --- Regras de Atividades Complementares (Baseado no HORAS.pdf) ---
-        const RULES = [
-            {
-                group: "A",
-                name: "ENSINO",
-                max: 90, // Máximo de 90 horas
-                activities: [
-                    // 1.A. Cursos de língua estrangeira
-                    { id: "1A", description: "Cursos de língua estrangeira (Avaliado semestralmente)", calc: (h) => Math.min(20, h), unit: "h comprovadas (Máximo 20h/semestre)" },
-                    // 2.A. Participação em cursos extraordinários
-                    { id: "2A", description: "Cursos extraordinários da sua área de formação", calc: (h) => Math.floor(h / 4), unit: "h cursadas (1h para cada 4h)" },
-                    // 3.A. Participação como ouvinte em palestras, congressos e seminários
-                    { id: "3A", description: "Ouvinte em palestras, congressos e seminários", calc: (h) => Math.floor(h / 4), unit: "h de participação (1h para cada 4h)" },
-                    // 4.A. Participação e aprovação em disciplinas/unidades de enriquecimento curricular
-                    { id: "4A", description: "Aprovação em disciplinas/unidades de enriquecimento curricular", calc: (h) => Math.min(20, h), unit: "h da disciplina (Máximo 20h/semestre)" },
-                    // 5.A. Monitoria (bolsista ou voluntário)
-                    { id: "5A", description: "Monitoria (bolsista ou voluntário)", calc: (h) => 25, unit: "semestre (Valor fixo: 25h)" },
-                    // 6.A. Participação em programas de intercâmbio (Ciência sem Fronteiras e outros)
-                    { id: "6A", description: "Participação em programas de intercâmbio", calc: (h) => Math.floor(h / 4), unit: "h comprovadas (1h para cada 4h)" }
-                ]
-            },
-            {
-                group: "B",
-                name: "PESQUISA e EXTENSÃO",
-                max: 100, // Máximo de 100 horas
-                activities: [
-                     // 1.B. Participação efetiva em trabalhos voluntários, atividades comunitárias...
-                     { id: "1B", description: "Trabalhos voluntários, atividades comunitárias (por semestre)", calc: (h) => 5, unit: "semestre (Valor fixo: 5h)" },
-                     // 2.B. Atuação como Instrutor em palestras técnicas, seminários, cursos...
-                     { id: "2B", description: "Instrutor em palestras/cursos (não remunerado)", calc: (h) => 2, unit: "apresentação (Valor fixo: 2h/palestra)" },
-                     // 3.B. Atuação como Instrutor em projetos
-                     { id: "3B", description: "Instrutor em projetos semestrais/anuais", calc: (h) => h === 1 ? 25 : 50, unit: "projeto (1=25h/semestre, 2+=50h/anual)" }, // Assume h é 1 para semestral, 2 para anual
-                     // 4.B. Participação como apresentador de trabalhos em palestras, congressos...
-                     { id: "4B", description: "Apresentador de trabalhos em eventos técnico-científicos", calc: (h) => 2, unit: "apresentação (Valor fixo: 2h/apresentação)" },
-                     // 5.B. Participação em projetos de iniciação científica e tecnológica, projetos de extensão...
-                     { id: "5B", description: "Participação em IC, Extensão, Grupos de Pesquisa", calc: (h) => 30, unit: "semestre (Valor fixo: 30h/semestre)" },
-                     // 6.B. Participação como expositor em exposições técnico-científicas.
-                     { id: "6B", description: "Expositor em exposições técnico-científicas", calc: (h) => 1, unit: "exposição (Valor fixo: 1h/exposição)" },
-                     // 7.B. Participação efetiva na organização de exposições, congressos, jornadas e seminários
-                     { id: "7B", description: "Organização de exposições, congressos e seminários", calc: (h) => 2, unit: "apresentação (Valor fixo: 2h/apresentação)" },
-                     // 8.B. Publicações em revistas técnicas.
-                     { id: "8B", description: "Publicações em revistas técnicas", calc: (h) => 20, unit: "publicação (Valor fixo: 20h/publicação)" },
-                     // 9.B. Publicações em anais de eventos técnico-científicos ou em periódicos científicos
-                     { id: "9B", description: "Publicações em anais de eventos ou periódicos científicos", calc: (h) => 10, unit: "publicação (Valor fixo: 10h/publicação)" },
-                     // 10.B. Premiação de trabalho acadêmico.
-                     { id: "10B", description: "Premiação de trabalho acadêmico", calc: (h) => 10, unit: "trabalho premiado (Valor fixo: 10h/trabalho)" },
-                     // 11.B. Estágio não obrigatório na área do curso.
-                     { id: "11B", description: "Estágio não obrigatório na área do curso", calc: (h) => Math.floor(h / 10), unit: "h estagiadas (1h para cada 10h)" },
-                     // 12.B. Trabalho com vínculo empregatício, desde que na área do curso.
-                     { id: "12B", description: "Trabalho com vínculo empregatício na área do curso", calc: (h) => Math.floor(h / 10), unit: "h trabalhadas (1h para cada 10h)" },
-                     // 13.B. Participação em Empresa/Consultoria Júnior e Incubadora Tecnológica.
-                     { id: "13B", description: "Participação em Empresa Júnior e Incubadora", calc: (h) => 25, unit: "semestre (Valor fixo: 25h/semestre)" },
-                ]
-            },
-            {
-                group: "C",
-                name: "REPRESENTAÇÃO ESTUDANTIL",
-                max: 50, // Máximo de 50 horas
-                activities: [
-                    // 1.C Representante de turma
-                    { id: "1C", description: "Representante de turma", calc: (h) => Math.floor(h / 4), unit: "h de atuação (1h para cada 4h)" },
-                    // 2.C Representação discente no Colegiado de TGP ou Conselho Superior
-                    { id: "2C", description: "Representação discente no Colegiado/Conselho Superior", calc: (h) => Math.floor(h / 4), unit: "h de atuação (1h para cada 4h)" },
-                    // 3.C Integrante de Diretório ou Centro Acadêmico no IFB
-                    { id: "3C", description: "Integrante de Diretório ou Centro Acadêmico", calc: (h) => Math.floor(h / 4), unit: "h de atuação (1h para cada 4h)" },
-                ]
-            }
-        ];
+        let db, auth, userId = null;
+        let initError = null;
 
-        // Função utilitária para calcular a hora complementar
-        function calculateHours(ruleId, inputHours) {
-            const rule = RULES.flatMap(g => g.activities).find(r => r.id === ruleId);
-            if (!rule) return 0;
-            return rule.calc(inputHours);
-        }
+        // Limites de horas por Grupo (em memória)
+        const MAX_HOURS = {
+            A: 90,
+            B: 100,
+            C: 50,
+        };
 
-        // Função para obter o grupo da atividade
-        function getGroup(ruleId) {
-            return RULES.find(g => g.activities.some(a => a.id === ruleId));
-        }
+        // Regras de Atividades (Baseado no documento HORAS.pdf)
+        const activityRules = {
+            A: [
+                { id: '1A', desc: '1.A. Cursos de língua estrangeira (20h/semestre ou carga horária no certificado, se inferior a 20h/semestre)', calc: (h) => Math.min(h, 20) },
+                { id: '2A', desc: '2.A. Participação em cursos extraordinários (1h para cada 4h cursadas)', calc: (h) => Math.floor(h / 4) },
+                { id: '3A', desc: '3.A. Participação como ouvinte em palestras, congressos e seminários (1h para cada 4h de participação)', calc: (h) => Math.floor(h / 4) },
+                { id: '4A', desc: '4.A. Participação e aprovação em disciplinas/unidades de enriquecimento (20h/semestre ou carga horária no certificado, se inferior a 20h/semestre)', calc: (h) => Math.min(h, 20) },
+                { id: '5A', desc: '5.A. Monitoria (bolsista ou voluntário) (25h por semestre)', calc: (h) => Math.min(h, 25) },
+                { id: '6A', desc: '6.A. Participação em programas de intercâmbio (1h para cada 4h comprovadas)', calc: (h) => Math.floor(h / 4) },
+            ],
+            B: [
+                { id: '1B', desc: '1.B. Participação efetiva em trabalhos voluntários, atividades comunitárias, etc. (5h por semestre)', calc: (h) => Math.min(h, 5) },
+                { id: '2B', desc: '2.B. Atuação como Instrutor em palestras, seminários, cursos (2 horas por palestra)', calc: (h) => h * 2 },
+                // Para 3B, o campo de horas/unidades será '1' para semestral, '2' para anual.
+                { id: '3B', desc: '3.B. Atuação como Instrutor em projetos semestrais/anuais (25h por projeto semestral ou 50h por projeto anual)', calc: (h) => h === 1 ? 25 : h === 2 ? 50 : 0 }, 
+                { id: '4B', desc: '4.B. Participação como apresentador de trabalhos em palestras, congressos e seminários (2 horas por apresentação)', calc: (h) => h * 2 },
+                { id: '5B', desc: '5.B. Participação em projetos de iniciação científica e tecnológica, extensão, grupos de pesquisa (30 horas por semestre)', calc: (h) => Math.min(h, 30) },
+                { id: '6B', desc: '6.B. Participação como expositor em exposições técnico-científicas (1 hora por exposição)', calc: (h) => h * 1 },
+                { id: '7B', desc: '7.B. Participação efetiva na organização de eventos (2 horas por apresentação)', calc: (h) => h * 2 },
+                { id: '8B', desc: '8.B. Publicações em revistas técnicas (20 horas por publicação)', calc: (h) => h * 20 },
+                { id: '9B', desc: '9.B. Publicações em anais de eventos ou periódicos (10 horas por publicação)', calc: (h) => h * 10 },
+                { id: '10B', desc: '10.B. Premiação de trabalho acadêmico (10 horas por trabalho premiado)', calc: (h) => h * 10 },
+                { id: '11B', desc: '11.B. Estágio não obrigatório na área do curso (1h para cada 10h estagiadas)', calc: (h) => Math.floor(h / 10) },
+                { id: '12B', desc: '12.B. Trabalho com vínculo empregatício na área do curso (1h para cada 10h trabalhadas)', calc: (h) => Math.floor(h / 10) },
+                { id: '13B', desc: '13.B. Participação em Empresa/Consultoria Júnior e Incubadora Tecnológica (25h por semestre)', calc: (h) => Math.min(h, 25) },
+            ],
+            C: [
+                { id: '1C', desc: '1.C. Representante de turma (1h para cada 4h de atuação)', calc: (h) => Math.floor(h / 4) },
+                { id: '2C', desc: '2.C. Representação discente no Colegiado/Conselho Superior (1h para cada 4h de atuação)', calc: (h) => Math.floor(h / 4) },
+                { id: '3C', desc: '3.C. Integrante de Diretório ou Centro Acadêmico no IFB (1h para cada 4h de atuação)', calc: (h) => Math.floor(h / 4) },
+            ],
+        };
 
-        // --- Funções de UI ---
+        // =========================================================================
+        // UTILITÁRIOS E UI (MODAL E POPULADORES)
+        // =========================================================================
 
-        // Função que gerencia o estado do formulário de adição
-        function setFormState(ready, message = "Registrar Atividade") {
-            const submitBtn = document.getElementById('submit-activity-btn');
-            const errorEl = document.getElementById('error-message');
-            
-            if (!submitBtn) return;
-
-            submitBtn.disabled = !ready;
-            submitBtn.textContent = message;
-
-            if (ready) {
-                submitBtn.classList.remove('bg-gray-400', 'hover:bg-gray-400');
-                submitBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                errorEl.classList.add('hidden');
-            } else {
-                submitBtn.classList.add('bg-gray-400', 'hover:bg-gray-400');
-                submitBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-            }
-        }
-
-        // Função para mostrar modal de confirmação (substitui o confirm())
-        function showConfirmationModal(title, message) {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('confirmation-modal');
-                const titleEl = document.getElementById('modal-title');
-                const messageEl = document.getElementById('modal-message');
+        /**
+         * Exibe um modal customizado (substitui o alert/confirm)
+         */
+        function showModal(title, message, isConfirmation = false) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('modal');
+                document.getElementById('modal-title').textContent = title;
+                document.getElementById('modal-message').innerHTML = message;
                 const confirmBtn = document.getElementById('modal-confirm-btn');
                 const cancelBtn = document.getElementById('modal-cancel-btn');
 
-                if (!modal || !titleEl || !messageEl || !confirmBtn || !cancelBtn) {
-                     console.error("Elementos do modal não encontrados.");
-                     resolve(false);
-                     return;
+                if (isConfirmation) {
+                    confirmBtn.classList.remove('hidden');
+                    confirmBtn.textContent = 'Confirmar';
+                    cancelBtn.classList.remove('hidden');
+                    cancelBtn.textContent = 'Cancelar';
+                    confirmBtn.onclick = () => { modal.classList.add('hidden'); resolve(true); };
+                    cancelBtn.onclick = () => { modal.classList.add('hidden'); resolve(false); };
+                } else {
+                    confirmBtn.classList.add('hidden');
+                    cancelBtn.classList.remove('hidden');
+                    cancelBtn.textContent = 'Fechar';
+                    cancelBtn.onclick = () => { modal.classList.add('hidden'); resolve(false); }; 
                 }
 
-                titleEl.textContent = title;
-                messageEl.textContent = message;
                 modal.classList.remove('hidden');
-                modal.classList.add('flex');
-
-                const onConfirm = () => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    resolve(true);
-                    cleanUp();
-                };
-
-                const onCancel = () => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    resolve(false);
-                    cleanUp();
-                };
-
-                const cleanUp = () => {
-                    confirmBtn.removeEventListener('click', onConfirm);
-                    cancelBtn.removeEventListener('click', onCancel);
-                };
-
-                confirmBtn.addEventListener('click', onConfirm);
-                cancelBtn.addEventListener('click', onCancel);
-            });
-        }
-
-        // Função que renderiza a lista de atividades e atualiza os totais
-        function updateUI(activities) {
-            
-            const userIdEl = document.getElementById('user-id-display');
-            if (userIdEl) {
-                userIdEl.textContent = userId || 'N/A';
-            }
-
-            const totalGlobalEl = document.getElementById('total-hours-global');
-            if (totalGlobalEl) {
-                // Soma todas as horas calculadas
-                // Garante que só somamos as atividades do usuário atual
-                const userActivities = activities.filter(a => a.userId === userId);
-                const totalGlobal = userActivities.reduce((sum, activity) => sum + activity.calculatedHours, 0);
-                totalGlobalEl.textContent = `${totalGlobal}h`;
-            }
-
-            // Renderiza o seletor de filtro ANTES de filtrar a lista
-            renderSemesterFilterSelector(activities);
-
-            const listEl = document.getElementById('activity-list');
-            if (!listEl) return;
-            listEl.innerHTML = '';
-            
-            const loadingMessage = document.getElementById('loading-message');
-            if (loadingMessage) loadingMessage.style.display = 'none';
-
-            // Filtragem de atividades com base no currentSemester
-            const filteredActivities = currentSemester === 'all' || !currentSemester 
-                ? activities.filter(a => a.userId === userId) // Mostrar todas do usuário
-                : activities.filter(a => a.semester === currentSemester && a.userId === userId); // Mostrar filtradas
-
-            // Cálculo dos totais do semestre atual
-            const groupTotals = { A: 0, B: 0, C: 0 };
-
-            filteredActivities.forEach(activity => {
-                const group = getGroup(activity.ruleId);
-                if (group) { 
-                    groupTotals[group.group] += activity.calculatedHours;
-                }
-            });
-
-            // Limitação e exibição do resumo
-            RULES.forEach(groupRule => {
-                const total = groupTotals[groupRule.group] || 0;
-                const limitedTotal = Math.min(total, groupRule.max);
-                
-                const summaryEl = document.getElementById(`group-${groupRule.group.toLowerCase()}-summary`);
-                if (summaryEl) {
-                    const groupName = groupRule.name === "PESQUISA e EXTENSÃO" ? "Pesquisa/Extensão" : groupRule.name;
-                    summaryEl.textContent = `Grupo ${groupRule.group} (${groupName}): ${limitedTotal}h / ${groupRule.max}h (Registrado: ${total}h)`;
-                    summaryEl.classList.remove('text-green-600', 'text-red-600');
-                    if (limitedTotal === groupRule.max && total > 0) {
-                        summaryEl.classList.add('text-green-600');
-                    }
-                    if (total > groupRule.max) {
-                         summaryEl.classList.add('text-red-600');
-                    }
-                }
-            });
-
-            if (filteredActivities.length === 0) {
-                listEl.innerHTML = '<p class="text-center text-gray-500 p-4 border rounded-lg">Nenhuma atividade registrada para este filtro.</p>';
-                return;
-            }
-
-            // Renderizar lista de atividades
-            filteredActivities.forEach(activity => {
-                const groupInfo = getGroup(activity.ruleId);
-                const ruleInfo = groupInfo ? groupInfo.activities.find(r => r.id === activity.ruleId) : null;
-                if (!groupInfo || !ruleInfo) return; 
-
-                const activityText = ruleInfo.description;
-                // Pega a nova descrição ou usa uma string vazia se não existir
-                const activityDescription = activity.description ? `<p class="text-xs text-gray-400 mt-1 italic">${activity.description}</p>` : '';
-
-                const activityEl = document.createElement('div');
-                activityEl.className = 'flex justify-between items-start bg-gray-50 p-4 rounded-lg border hover:bg-gray-100 transition';
-                activityEl.innerHTML = `
-                    <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-gray-800 break-words">${activityText} <span class="text-sm font-normal text-indigo-500">(${activity.semester})</span></p>
-                        <p class="text-sm text-gray-500">Grupo ${groupInfo.group} | ${activity.inputHours} ${ruleInfo.unit}</p>
-                        ${activityDescription}
-                    </div>
-                    <div class="flex items-center space-x-4 ml-4">
-                        <span class="text-lg font-bold text-indigo-600">${activity.calculatedHours}h</span>
-                        <button data-id="${activity.id}" class="delete-btn text-red-500 hover:text-red-700 transition" title="Excluir Atividade">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </div>
-                `;
-                listEl.appendChild(activityEl);
-            });
-
-            // Adicionar listeners para botões de exclusão
-            listEl.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const activityId = e.currentTarget.dataset.id;
-                    handleDeleteActivity(activityId);
-                });
-            });
-        }
-
-        // Renderiza as opções do filtro de semestre (dinâmico, baseado no que está salvo)
-        function renderSemesterFilterSelector(activities) {
-            const selector = document.getElementById('semester-filter');
-            if (!selector) return; 
-
-            // Filtra apenas os semestres das atividades do usuário atual
-            const userActivities = activities.filter(a => a.userId === userId);
-            // Ordena os semestres para o mais recente ficar no topo
-            const uniqueSemesters = [...new Set(userActivities.map(a => a.semester))].sort().reverse();
-            
-            const selectedValue = selector.value;
-            selector.innerHTML = '<option value="all">Todos os Semestres</option>';
-
-            uniqueSemesters.forEach(semester => {
-                const option = document.createElement('option');
-                option.value = semester;
-                option.textContent = semester;
-                if (uniqueSemesters[0] === semester) {
-                    option.textContent += ' (Semestre Mais Recente)';
-                }
-                selector.appendChild(option);
-            });
-
-            // Lógica de seleção:
-            if (uniqueSemesters.includes(selectedValue)) {
-                // Se o valor já selecionado ainda existe, mantém
-                selector.value = selectedValue;
-                currentSemester = selectedValue;
-            } else if (uniqueSemesters.length > 0) {
-                // Se o valor anterior sumiu, seleciona o mais recente automaticamente
-                selector.value = uniqueSemesters[0];
-                currentSemester = uniqueSemesters[0];
-            } else {
-                // Se não há atividades, volta para "Todos"
-                selector.value = 'all';
-                currentSemester = 'all';
-            }
-        }
-
-        // Renderiza as opções do campo de Semestre (FIXO)
-        function renderFixedSemesterOptions(semesters) {
-            const selector = document.getElementById('semester-input');
-            if (!selector) return;
-
-            // Limpa e adiciona a opção padrão
-            selector.innerHTML = '<option value="">Selecione o Semestre</option>';
-
-            // Adiciona as opções fixas fornecidas pelo usuário
-            semesters.forEach(semester => {
-                const option = document.createElement('option');
-                option.value = semester;
-                option.textContent = semester;
-                selector.appendChild(option);
             });
         }
         
-        // Renderiza as opções de Grupo e Regra no formulário
-        function renderFormOptions() {
-            const groupSelect = document.getElementById('activity-group');
-            const ruleSelect = document.getElementById('activity-rule');
-            if (!groupSelect || !ruleSelect) return; 
+        /**
+         * Simula a obtenção de um valor de input dentro do fluxo de modal.
+         */
+        function showPromptModal(title, placeholder) {
+             return new Promise(resolve => {
+                const modal = document.getElementById('modal');
+                document.getElementById('modal-title').textContent = title;
+                
+                const inputId = 'modal-input-field';
+                const inputHtml = `<input type="text" id="${inputId}" placeholder="${placeholder}" class="input-field w-full mt-2 mb-4 p-2 border border-gray-300 rounded" />`;
+                
+                document.getElementById('modal-message').innerHTML = inputHtml;
+                
+                const confirmBtn = document.getElementById('modal-confirm-btn');
+                const cancelBtn = document.getElementById('modal-cancel-btn');
 
-            groupSelect.innerHTML = '<option value="">Selecione um Grupo</option>';
-            RULES.forEach(group => {
-                const option = document.createElement('option');
-                option.value = group.group;
-                option.textContent = `Grupo ${group.group} - ${group.name} (Máx: ${group.max}h)`;
-                groupSelect.appendChild(option);
-            });
+                confirmBtn.classList.remove('hidden');
+                confirmBtn.textContent = 'Adicionar';
+                cancelBtn.classList.remove('hidden');
+                cancelBtn.textContent = 'Cancelar';
 
-            groupSelect.addEventListener('change', (e) => {
-                const selectedGroup = e.target.value;
-                ruleSelect.innerHTML = '<option value="">Selecione a Regra</option>';
-                ruleSelect.disabled = true;
-
-                if (selectedGroup) {
-                    const groupRule = RULES.find(g => g.group === selectedGroup);
-                    if (groupRule) {
-                        groupRule.activities.forEach(rule => {
-                            // Tenta calcular um valor de exemplo para exibir no seletor, usando 10 como valor base
-                            let exampleInput = 10;
-                            let exampleHours = 0;
-                            if (rule.unit.includes("semestre") || rule.unit.includes("projeto")) {
-                                exampleInput = 1; // Para regras fixas por unidade
-                            }
-                            exampleHours = calculateHours(rule.id, exampleInput);
-                            
-                            const option = document.createElement('option');
-                            option.value = rule.id;
-                            option.textContent = `${rule.id}. ${rule.description} (Cálculo: ${exampleHours}h para ${exampleInput} ${rule.unit.replace(/\s\(.*/, '')})`;
-                            ruleSelect.appendChild(option);
-                        });
-                        ruleSelect.disabled = false;
-                    }
-                }
+                confirmBtn.onclick = () => { 
+                    const value = document.getElementById(inputId).value;
+                    modal.classList.add('hidden'); 
+                    document.getElementById('modal-message').innerHTML = '';
+                    resolve(value.trim()); 
+                };
+                
+                cancelBtn.onclick = () => { 
+                    modal.classList.add('hidden'); 
+                    document.getElementById('modal-message').innerHTML = '';
+                    resolve(null); 
+                };
+                
+                modal.classList.remove('hidden');
             });
         }
 
 
-        // --- Funções de Firebase/Dados ---
+        /**
+         * Exibe a mensagem de erro de inicialização.
+         */
+        function displayInitError(error) {
+            initError = error;
+            const errorDiv = document.getElementById('init-error');
+            errorDiv.classList.remove('hidden');
+            
+            let message = '';
+            if (error.code === 'firebase-config-missing') {
+                message = `
+                    <p class="font-bold mb-1">Erro de Configuração do Ambiente</p>
+                    <p class="text-sm">As variáveis de ambiente do Firebase (como a API Key) não foram carregadas corretamente. Isso impede o salvamento das suas horas no banco de dados.</p>
+                    <p class="mt-2 text-xs font-mono break-all">
+                        Detalhes: ${error.message}
+                    </p>
+                `;
+            } else {
+                message = `
+                    <p class="font-bold mb-1">Erro de Inicialização do Firebase</p>
+                    <p class="text-sm">Ocorreu uma falha na conexão. Verifique suas Regras de Segurança e permissões.</p>
+                    <p class="mt-2 text-xs font-mono break-all">
+                        Código: ${error.code || 'Desconhecido'} | Mensagem: ${error.message}
+                    </p>
+                `;
+            }
+            
+            errorDiv.innerHTML = message;
 
-       // Função principal para inicialização do Firebase e autenticação
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+            // Desabilita botões e campos que dependem do Firebase
+            document.getElementById('register-btn').textContent = 'Erro de Inicialização';
+            document.getElementById('register-btn').disabled = true;
+            document.getElementById('add-semester-btn').disabled = true;
+            document.getElementById('user-id').textContent = 'Erro de Conexão';
+            document.getElementById('activities-loading').textContent = 'Erro ao carregar atividades.';
+            document.getElementById('form-message').textContent = 'A aplicação não pode salvar dados. Corrija o erro acima.';
+            document.getElementById('form-message').classList.remove('hidden');
+            document.getElementById('form-message').classList.add('text-red-600');
+        }
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBAZ_MqF9r5agWsK9bZXne7zeNzGXe3kjs",
-  authDomain: "calculo-de-hc.firebaseapp.com",
-  projectId: "calculo-de-hc",
-  storageBucket: "calculo-de-hc.firebasestorage.app",
-  messagingSenderId: "160217454817",
-  appId: "1:160217454817:web:c58def4b16e7f8c1ff7fa0",
-  measurementId: "G-0YS7S2WKZN"
-};
+        /**
+         * Calcula as horas válidas com base na regra e horas comprovadas.
+         */
+        function calculateValidHours(ruleId, hours) {
+            const groupKey = ruleId.charAt(0);
+            
+            if (groupKey && activityRules[groupKey]) {
+                const rule = activityRules[groupKey].find(r => r.id === ruleId);
+                return rule ? rule.calc(hours) : 0;
+            }
+            return 0;
+        }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+        /**
+         * Popula o dropdown de regras com base no grupo selecionado.
+         */
+        function populateRules(groupKey) {
+            const ruleSelect = document.getElementById('rule-select');
+            ruleSelect.innerHTML = '<option value="" disabled selected>Selecione a Regra</option>';
+            ruleSelect.disabled = true;
+            document.getElementById('rule-description').textContent = '';
 
-            // Checa se a configuração foi fornecida
-            if (!firebaseConfig || !firebaseConfig.apiKey) {
-                console.error("Firebase config não está disponível.");
-                document.getElementById('loading-message').textContent = "Erro: Configuração do Firebase ausente.";
-                setFormState(false, "Erro de Configuração");
+            if (groupKey && activityRules[groupKey]) {
+                activityRules[groupKey].forEach(rule => {
+                    const option = document.createElement('option');
+                    option.value = rule.id;
+                    option.textContent = rule.desc.split('(')[0].trim();
+                    ruleSelect.appendChild(option);
+                });
+                ruleSelect.disabled = false;
+            }
+        }
+
+        /**
+         * Popula os dropdowns de semestre com base nos dados do usuário.
+         */
+        function populateSemesters(semesters) {
+            const semesterSelect = document.getElementById('semester-select');
+            const filterSelect = document.getElementById('filter-semester');
+            
+            semesterSelect.innerHTML = '<option value="" disabled selected>Selecione o Semestre</option>';
+            const currentFilter = filterSelect.value;
+            filterSelect.innerHTML = '<option value="all">Todos os Semestres</option>';
+            
+            // Ordena os semestres para que o mais recente fique no topo (Decrescente)
+            // Usa localeCompare para ordenar corretamente strings de semestre como '2026/2'
+            semesters.sort((a, b) => b.localeCompare(a)).forEach((sem, index) => {
+                
+                const option1 = document.createElement('option');
+                option1.value = sem;
+                option1.textContent = sem;
+                semesterSelect.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = sem;
+                option2.textContent = sem + (index === 0 ? ' (Semestre Atual)' : '');
+                filterSelect.appendChild(option2);
+            });
+            
+            // Tenta manter o filtro selecionado após a atualização
+            if (currentFilter && filterSelect.querySelector(`option[value="${currentFilter}"]`)) {
+                filterSelect.value = currentFilter;
+            } else {
+                 // Define o filtro para o mais recente se existir
+                if (semesters.length > 0) {
+                    filterSelect.value = semesters[0];
+                }
+            }
+
+            let currentSemester = semesters.length > 0 ? semesters[0] : 'Nenhum';
+            document.getElementById('current-semester-label').textContent = currentSemester;
+        }
+
+        /**
+         * Renderiza a lista de atividades na UI.
+         */
+        function renderActivities(activities, filterSemester) {
+            const listContainer = document.getElementById('activities-list');
+            listContainer.innerHTML = '';
+            document.getElementById('activities-loading').classList.add('hidden');
+            document.getElementById('total-global-hours').textContent = '0h';
+
+            if (!activities || activities.length === 0) {
+                listContainer.innerHTML = '<p class="text-gray-500 italic">Nenhuma atividade registrada ainda.</p>';
                 return;
             }
-// ... restante do código
+
+            let totalGlobalHours = 0;
+            const currentSemester = document.getElementById('current-semester-label').textContent;
+            const currentSemesterSummary = { A: 0, B: 0, C: 0 };
+
+
+            activities
+                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) // Ordena pela data de registro
+                .forEach(activity => {
+                    totalGlobalHours += activity.validHours;
+
+                    const groupKey = activity.group;
+                    // Calcula o resumo apenas para o semestre atualmente selecionado na UI (o mais recente)
+                    if (activity.semester === currentSemester) {
+                        currentSemesterSummary[groupKey] += activity.validHours;
+                    }
+
+                    // Verifica se a atividade deve ser exibida
+                    if (filterSemester === 'all' || activity.semester === filterSemester) {
+                        const div = document.createElement('div');
+                        div.className = 'flex justify-between items-start p-4 border-b last:border-b-0 hover:bg-gray-50';
+
+                        div.innerHTML = `
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-gray-800">${activity.description}</p>
+                                <p class="text-xs text-gray-600 mt-1">
+                                    <span class="font-medium">${activity.ruleId} - Grupo ${groupKey} (${activity.semester})</span>
+                                    | Horas Comprovadas: ${activity.reportedHours}h
+                                    | <span class="${activity.validHours === 0 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'}">Válidas: ${activity.validHours}h</span>
+                                </p>
+                            </div>
+                            <button data-id="${activity.id}" class="delete-btn text-red-500 hover:text-red-700 ml-4 p-2 rounded-full transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 1 0 002 2h8a2 1 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        `;
+                        listContainer.appendChild(div);
+                    }
+                });
+
+            document.getElementById('total-global-hours').textContent = `${totalGlobalHours}h`;
+            document.getElementById('summary-a').textContent = `${currentSemesterSummary.A}h`;
+            document.getElementById('summary-b').textContent = `${currentSemesterSummary.B}h`;
+            document.getElementById('summary-c').textContent = `${currentSemesterSummary.C}h`;
+
+            // Adiciona listeners para os botões de deletar
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', handleDeleteActivity);
+            });
+        }
+
+        // =========================================================================
+        // FIREBASE (AUTENTICAÇÃO E INICIALIZAÇÃO)
+        // =========================================================================
+
+        /**
+         * Inicializa o Firebase e o processo de autenticação.
+         */
+        async function initFirebase() {
+            if (!firebaseConfig || !appId) {
+                // Este é o cenário que causa o erro de inicialização se o ambiente falhar
+                const error = {
+                    code: 'firebase-config-missing',
+                    message: 'As variáveis __app_id e __firebase_config são obrigatórias para a persistência de dados.'
+                };
+                console.error(error);
+                displayInitError(error);
+                return;
+            }
 
             try {
-                app = initializeApp(firebaseConfig);
+                const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // Autenticação
+                // Autenticação (Custom Token > Anônima)
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
                     await signInAnonymously(auth);
                 }
 
+                // Listener de Estado de Autenticação
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
-                        isAuthReady = true;
-                        document.getElementById('user-id-display').textContent = userId;
-                        startDataListener();
-                        setFormState(true, "Registrar Atividade"); // Habilita o formulário
+                        document.getElementById('user-id').textContent = userId.substring(0, 8) + '...'; 
+                        
+                        document.getElementById('register-btn').textContent = 'Registrar Atividade';
+                        document.getElementById('register-btn').disabled = false;
+                        document.getElementById('add-semester-btn').disabled = false;
+                        
+                        monitorUserData();
                     } else {
-                        userId = null;
-                        isAuthReady = true;
-                        document.getElementById('user-id-display').textContent = 'Desconectado';
-                        document.getElementById('loading-message').textContent = 'Usuário não autenticado.';
-                        setFormState(false, "Erro de Autenticação"); // Desabilita o formulário
-                        updateUI([]);
+                        document.getElementById('user-id').textContent = 'Usuário Não Autenticado';
+                        document.getElementById('activities-loading').textContent = 'Aguardando autenticação...';
+                        if (!initError) showModal('Atenção', 'Sua sessão expirou ou foi desconectada.', false);
                     }
                 });
 
             } catch (error) {
-                console.error("Erro na inicialização do Firebase:", error);
-                document.getElementById('loading-message').textContent = `Erro de inicialização: ${error.message}`;
-                setFormState(false, "Erro de Inicialização");
+                console.error("Erro fatal na inicialização do Firebase:", error);
+                displayInitError(error);
             }
         }
 
-        // Inicia o listener de dados
-        function startDataListener() {
-            if (!db || !userId) {
-                console.error("Firestore ou User ID não está pronto para o listener.");
-                return;
+        // =========================================================================
+        // FIREBASE (OPERAÇÕES DE DADOS)
+        // =========================================================================
+
+        /**
+         * Retorna a referência do Documento de Configuração do usuário (para semestres).
+         * Caminho: artifacts/{appId}/users/{userId}/config/semesters (6 segmentos, par, válido)
+         */
+        const getUserDocRef = () => {
+            if (!db || !userId) throw new Error("Firebase não está pronto ou userId ausente.");
+            // Documento de Perfil para guardar dados de configuração como 'semesters'
+            return doc(db, 'artifacts', appId, 'users', userId, 'config', 'semesters');
+        };
+
+        /**
+         * Retorna a referência da Coleção de Atividades do usuário.
+         * Caminho: artifacts/{appId}/users/{userId}/activities (5 segmentos, ímpar, válido)
+         */
+        const getActivitiesCollectionRef = () => {
+            if (!db || !userId) throw new Error("Firebase não está pronto ou userId ausente.");
+            // Coleção de Atividades
+            return collection(db, 'artifacts', appId, 'users', userId, 'activities');
+        };
+        
+        /**
+         * Inicializa o perfil do usuário com a lista de semestres padrão (se estiver vazio).
+         */
+        async function initializeUserSemesters(semesters) {
+            try {
+                const userDocRef = getUserDocRef();
+                // Usa setDoc com merge: true para criar ou atualizar o campo semesters
+                await setDoc(userDocRef, { 
+                    semesters: semesters 
+                }, { merge: true });
+
+            } catch (error) {
+                console.error("Erro ao inicializar semestres do perfil:", error);
             }
+        }
 
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            // Caminho para dados públicos (compartilhados entre usuários)
-            const activitiesColRef = collection(db, `artifacts/${appId}/public/data/activities`);
-            
-            // Ouve as mudanças em tempo real
-            onSnapshot(activitiesColRef, (snapshot) => {
-                if (!isAuthReady) return; 
 
-                activitiesSnapshot = [];
-                snapshot.forEach(doc => {
-                    activitiesSnapshot.push({ id: doc.id, ...doc.data() });
+        /**
+         * Adiciona um novo semestre ao perfil do usuário.
+         */
+        async function addNewSemester(newSemester) {
+            try {
+                const userDocRef = getUserDocRef();
+                // Usa arrayUnion para garantir que o semestre seja adicionado apenas se não existir
+                await updateDoc(userDocRef, { 
+                    semesters: arrayUnion(newSemester) 
                 });
+
+                showModal('Sucesso!', `Semestre **${newSemester}** adicionado com sucesso.`, false);
+            } catch (error) {
+                console.error("Erro ao adicionar semestre:", error);
+                showModal('Erro!', 'Não foi possível adicionar o semestre. Verifique o console.', false);
+            }
+        }
+
+        /**
+         * Lida com o registro de uma nova atividade no Firestore.
+         */
+        async function handleAddActivity(data) {
+            const btn = document.getElementById('register-btn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const activityData = {
+                    ...data,
+                    timestamp: Date.now() 
+                };
                 
-                // Ordenação no cliente (JS)
-                activitiesSnapshot.sort((a, b) => {
-                    const semesterCompare = (b.semester || '').localeCompare(a.semester || '');
-                    if (semesterCompare !== 0) return semesterCompare;
-                    return (a.timestamp || 0) - (b.timestamp || 0);
-                });
+                await addDoc(getActivitiesCollectionRef(), activityData);
 
-                // Renderiza a UI com os dados completos (será filtrado dentro de updateUI)
-                updateUI(activitiesSnapshot);
+                document.getElementById('add-activity-form').reset();
+                // Reseta a seleção de regras e botões após o sucesso
+                populateRules(null); 
+                document.getElementById('register-btn').disabled = true;
 
+                document.getElementById('form-message').textContent = 'Atividade registrada com sucesso!';
+                document.getElementById('form-message').classList.remove('hidden', 'text-red-600');
+                document.getElementById('form-message').classList.add('text-green-600');
+                
+            } catch (error) {
+                console.error("Erro ao registrar atividade:", error);
+                document.getElementById('form-message').textContent = 'Erro ao salvar atividade: ' + error.message;
+                document.getElementById('form-message').classList.remove('hidden', 'text-green-600');
+                document.getElementById('form-message').classList.add('text-red-600');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                setTimeout(() => {
+                    document.getElementById('form-message').classList.add('hidden');
+                }, 5000);
+            }
+        }
+
+        /**
+         * Lida com a exclusão de uma atividade.
+         */
+        async function handleDeleteActivity(event) {
+            const activityId = event.currentTarget.getAttribute('data-id');
+            if (!activityId) return;
+
+            const confirmed = await showModal(
+                'Confirmação de Exclusão', 
+                'Tem certeza de que deseja deletar esta atividade? Esta ação é irreversível.', 
+                true
+            );
+
+            if (confirmed) {
+                try {
+                    const docRef = doc(getActivitiesCollectionRef(), activityId);
+                    await deleteDoc(docRef);
+                    // Não precisa de showModal, pois o onSnapshot cuidará da atualização
+                } catch (error) {
+                    console.error("Erro ao deletar atividade:", error);
+                    showModal('Erro!', 'Não foi possível deletar a atividade. Verifique o console.', false);
+                }
+            }
+        }
+
+        /**
+         * Monitora os dados do usuário (semestres e atividades) em tempo real.
+         */
+        function monitorUserData() {
+            // 1. Monitora o documento de perfil para a lista de semestres
+            onSnapshot(getUserDocRef(), (docSnapshot) => {
+                const data = docSnapshot.data();
+                // Recupera a lista salva ou usa a lista inicial se a salva estiver vazia/ausente
+                const savedSemesters = (data && Array.isArray(data.semesters) && data.semesters.length > 0) ? data.semesters : null;
+
+                if (savedSemesters) {
+                    populateSemesters(savedSemesters);
+                } else {
+                    // Se não há semestres salvos, inicializa com a lista padrão
+                    populateSemesters(INITIAL_SEMESTERS);
+                    if (!docSnapshot.exists() || !data || !data.semesters || data.semesters.length === 0) {
+                        initializeUserSemesters(INITIAL_SEMESTERS);
+                    }
+                }
             }, (error) => {
-                console.error("Erro ao escutar atividades:", error);
-                document.getElementById('activity-list').innerHTML = `<p class="text-red-600 text-center">Erro ao carregar dados: ${error.message}</p>`;
+                console.error("Erro ao monitorar perfil/semestres:", error);
+                // Permite a execução, mas avisa sobre o problema de monitoramento
+            });
+
+            // 2. Monitora a coleção de atividades
+            onSnapshot(getActivitiesCollectionRef(), (snapshot) => {
+                const activities = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                const filter = document.getElementById('filter-semester').value;
+                renderActivities(activities, filter);
+            }, (error) => {
+                console.error("Erro ao monitorar atividades:", error);
+                document.getElementById('activities-loading').textContent = 'Erro ao carregar atividades. (Verifique as regras de segurança do Firestore)';
             });
         }
 
-        // Função para adicionar atividade
-        async function handleAddActivity(e) {
-            e.preventDefault();
-            const form = e.target;
-            const errorEl = document.getElementById('error-message');
-            errorEl.classList.add('hidden');
+        // =========================================================================
+        // EVENT LISTENERS (LÓGICA DO FORMULÁRIO)
+        // =========================================================================
 
-            // *** CHECAGEM CRÍTICA DE PRONTIDÃO DO FIREBASE ***
-            if (!isAuthReady || !db || !userId) {
-                errorEl.textContent = 'Erro de conexão. Aguarde o carregamento ou tente novamente. (ID: ' + (userId || 'N/A') + ')';
-                errorEl.classList.remove('hidden');
-                console.error("Tentativa de adicionar atividade antes do Firebase/Auth estar pronto.");
-                return;
-            }
+        window.onload = function () {
+            initFirebase();
 
-            const ruleId = document.getElementById('activity-rule').value;
-            const inputHours = parseInt(document.getElementById('hours-input').value);
-            const semester = document.getElementById('semester-input').value.trim();
-            // Pega o valor do novo campo de descrição
-            const description = document.getElementById('description-input').value.trim();
+            // 1. Seleção de Grupo
+            document.getElementById('group-select').addEventListener('change', (e) => {
+                const groupKey = e.target.value;
+                populateRules(groupKey);
+                // Garante que o botão de registro só seja reativado após a seleção da regra
+                document.getElementById('register-btn').disabled = true; 
+            });
 
-            if (!ruleId || !inputHours || !semester) {
-                errorEl.textContent = 'Preencha todos os campos obrigatórios (*Horas/Unidades e Semestre*).';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-
-            if (inputHours <= 0) {
-                 errorEl.textContent = 'As horas comprovadas devem ser um número positivo.';
-                 errorEl.classList.remove('hidden');
-                 return;
-            }
-            
-            // Checagem extra se o semestre é válido (garantida pela lista fixa)
-            if (!FIXED_SEMESTERS.includes(semester)) {
-                 errorEl.textContent = 'Semestre de realização inválido. Selecione um da lista permitida.';
-                 errorEl.classList.remove('hidden');
-                 return;
-            }
-
-
-            const calculatedHours = calculateHours(ruleId, inputHours);
-            if (calculatedHours <= 0) {
-                 errorEl.textContent = 'As horas calculadas resultaram em 0 ou menos. Verifique a regra e as horas inputadas.';
-                 errorEl.classList.remove('hidden');
-                 return;
-            }
-
-            const newActivity = {
-                userId: userId, // Garante que a atividade está vinculada ao usuário atual
-                ruleId: ruleId,
-                inputHours: inputHours,
-                calculatedHours: calculatedHours,
-                semester: semester,
-                description: description, // Adiciona o novo campo de descrição
-                timestamp: Date.now(),
-            };
-
-            // Desabilita o botão para evitar cliques duplicados
-            setFormState(false, "Salvando...");
-
-            try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const activitiesColRef = collection(db, `artifacts/${appId}/public/data/activities`);
-                await addDoc(activitiesColRef, newActivity);
+            // 2. Seleção de Regra
+            document.getElementById('rule-select').addEventListener('change', (e) => {
+                const ruleId = e.target.value;
+                const groupKey = ruleId.charAt(0);
                 
-                // Limpeza da UI
-                form.reset();
-                const ruleSelect = document.getElementById('activity-rule');
-                if (ruleSelect) {
-                    ruleSelect.innerHTML = '<option value="">Selecione a Regra</option>';
-                    ruleSelect.disabled = true;
+                if (groupKey && activityRules[groupKey]) {
+                    const rule = activityRules[groupKey].find(r => r.id === ruleId);
+                    if (rule) {
+                        document.getElementById('rule-description').textContent = rule.desc;
+                        document.getElementById('register-btn').disabled = false;
+                    }
+                } else {
+                    document.getElementById('rule-description').textContent = '';
+                    document.getElementById('register-btn').disabled = true;
                 }
-                console.log("Atividade adicionada com sucesso!");
-                setFormState(true, "Registrar Atividade"); // Re-habilita o botão
-            } catch (error) {
-                console.error("Erro ao adicionar atividade:", error);
-                errorEl.textContent = `Erro ao salvar no banco de dados: ${error.message}`;
-                errorEl.classList.remove('hidden');
-                setFormState(true, "Registrar Atividade"); // Re-habilita o botão em caso de falha
-            }
-        }
+            });
 
-        // Função para deletar atividade
-        async function handleDeleteActivity(id) {
-            const confirmed = await showConfirmationModal(
-                "Confirmar Exclusão", 
-                "Você tem certeza que deseja excluir este registro de atividade complementar? Esta ação não pode ser desfeita."
-            );
+            // 3. Submissão do Formulário
+            document.getElementById('add-activity-form').addEventListener('submit', (e) => {
+                e.preventDefault();
 
-            if (!confirmed || !db || !userId) return;
-
-            try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const docRef = doc(db, `artifacts/${appId}/public/data/activities`, id);
-                await deleteDoc(docRef);
-                console.log("Atividade deletada com sucesso!");
-            } catch (error) {
-                console.error("Erro ao deletar atividade:", error);
-                const errorEl = document.getElementById('error-message');
-                if (errorEl) {
-                    errorEl.textContent = `Erro ao deletar: ${error.message}`;
-                    errorEl.classList.remove('hidden');
+                if (initError) {
+                    showModal('Erro Crítico', 'A aplicação falhou ao inicializar o Firebase. Não é possível registrar atividades.', false);
+                    return;
                 }
-            }
-        }
+                
+                const group = document.getElementById('group-select').value;
+                const ruleId = document.getElementById('rule-select').value;
+                const reportedHours = parseInt(document.getElementById('hours-input').value, 10);
+                const semester = document.getElementById('semester-select').value;
+                const description = document.getElementById('description-input').value.trim();
+                
+                if (!ruleId || !group || !semester || description === '' || isNaN(reportedHours) || reportedHours <= 0) {
+                    showModal('Campos Faltando', 'Por favor, preencha todos os campos obrigatórios corretamente (Grupo, Regra, Horas/Unidades e Semestre).', false);
+                    return;
+                }
 
-        // --- Inicialização (Ponto de entrada) ---
+                const validHours = calculateValidHours(ruleId, reportedHours);
 
-        window.onload = function() {
-            setFormState(false, "Carregando..."); // Estado inicial do botão
-            renderFormOptions(); // Renderiza as opções de grupo e regra
-
-            // Renderiza as opções fixas de semestre para o formulário
-            renderFixedSemesterOptions(FIXED_SEMESTERS);
-
-            initializeAppAndAuth(); // Inicializa Firebase e começa a ouvir dados
-            
-            const form = document.getElementById('add-activity-form');
-            if (form) {
-                form.addEventListener('submit', handleAddActivity);
-            }
-
-            const selector = document.getElementById('semester-filter');
-            if (selector) {
-                selector.addEventListener('change', (e) => {
-                    currentSemester = e.target.value;
-                    // Filtra a UI com o novo valor do seletor
-                    updateUI(activitiesSnapshot); 
+                handleAddActivity({
+                    group,
+                    ruleId,
+                    reportedHours,
+                    validHours,
+                    semester,
+                    description,
                 });
-            }
-        };
+            });
 
+            // 4. Botão de Novo Semestre
+            document.getElementById('add-semester-btn').addEventListener('click', async () => {
+                 if (initError) {
+                    showModal('Erro Crítico', 'A aplicação falhou ao inicializar o Firebase. Não é possível adicionar semestres.', false);
+                    return;
+                }
+                
+                const newSemester = await showPromptModal(
+                    'Adicionar Novo Semestre', 
+                    'Ex: 2026/1 ou 2025/2' 
+                );
+
+                if (newSemester) {
+                    const semesterValue = newSemester.trim();
+                    // Valida o formato AAAA/1 ou AAAA/2
+                    if (/^\d{4}\/[12]$/.test(semesterValue)) {
+                        await addNewSemester(semesterValue);
+                    } else {
+                        showModal('Formato Inválido', 'O semestre deve estar no formato **AAAA/1** ou **AAAA/2** (Ex: 2025/2).', false);
+                    }
+                }
+            });
+
+            // 5. Filtro de Semestre
+            document.getElementById('filter-semester').addEventListener('change', (e) => {
+                const filter = e.target.value;
+                // Re-renderiza a lista de atividades com o novo filtro usando os dados já monitorados
+                if (auth && auth.currentUser && auth.currentUser.uid) {
+                     // Isso força o monitoramento de atividades a re-renderizar com o novo filtro
+                    onSnapshot(getActivitiesCollectionRef(), (snapshot) => {
+                        const activities = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        renderActivities(activities, filter);
+                    });
+                }
+            });
+        };
     </script>
 </body>
 </html>
